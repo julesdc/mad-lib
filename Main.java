@@ -4,133 +4,257 @@
  * Version, Date: V 1.0, 11/10/15
  */
 
-package programming.task.pkg3.madlib;
-
-import java.io.*;
+package HandIn;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.TitledBorder;
+import java.awt.event.ActionEvent; 
+import java.awt.event.ActionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+/**
+ *
+ * @author Jules
+ */
+public class NewMain extends JFrame{
 
-public class Main extends JFrame implements ActionListener{
-
-    JTextField sntcePathTxt;
-    JTextField verbsPathTxt;
-    JTextField nounsPathTxt;
-    JTextArea outputTxt;
+    FileManager fm;
+    String sentenceFilePath;
+    String nounFilePath;
+    String verbFilePath;
+    String outputFilePath;
     
+    JPanel northPanel;
+    JPanel southPanel;
+    JPanel eastPanel;
+    JPanel westPanel;
+    JPanel centerPanel;
+    
+    JLabel titleLabel;
+    JLabel sentenceTick;
+    JLabel nounTick;
+    JLabel verbTick;
+    JLabel outputTick;
+    
+    Font titleFont;
+    
+    JButton exitButton;
+    JButton okayButton;
+    JButton sentenceButton;
+    JButton nounButton;
+    JButton verbButton;
+    JButton outputButton;
+    JButton createNewFilesButton;
+    
+    JTextArea outputArea;
     JScrollPane scroller;
     
-    JLabel sntceLBL;
-    JLabel verbsLBL;
-    JLabel nounsLBL;
-    JLabel outputLBL;
-    
-    JPanel sntcePane;
-    JPanel wordsPane;
-    JPanel innerWordsPane1;
-    JPanel innerWordsPane2;
-    JPanel outputPane;
-    JPanel buttonPane;
-    
-    Container c;
-    
-    JButton okayBTN;
-    JButton exitBTN;
-    
-    Color cl;
+    JFileChooser sfc;
+    JFileChooser nfc;
+    JFileChooser vfc;
     
     public static void main(String[] args) {
-        Main m = new Main();
-        m.createGUI();
-        m.setVisible(true);
-        
-        
+        NewMain main = new NewMain();
+        main.sfc = new JFileChooser();
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Notepad Files only", "txt");
+        main.sfc.addChoosableFileFilter(filter);
+        main.createGUI();
+        main.setVisible(true);
     }
+    
+    public void createGUI(){
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(450,300);
+        setLocationRelativeTo(null);        
+        setTitle("Mad-Lib");
         
-    @Override
-    public void actionPerformed(ActionEvent e){
-        Object btn = e.getSource();
-        if(btn == exitBTN){
-            System.exit(0);
-        }else{ if (btn == okayBTN){
-            if(sntcePathTxt.getText().equals("")){
-                JOptionPane.showMessageDialog(null, "You need to enter a correct path to the sentence text box.", "Error!", JOptionPane.ERROR_MESSAGE);
-            }else{ if (nounsPathTxt.getText().equals("")){
-                JOptionPane.showMessageDialog(null, "You need to enter a correct path to the nouns text box.", "Error!", JOptionPane.ERROR_MESSAGE);
-            }else{ if (verbsPathTxt.getText().equals("")){
-                JOptionPane.showMessageDialog(null, "You need to enter a correct path to the verbs text box.", "Error!", JOptionPane.ERROR_MESSAGE);
-            }else{
-                FileManager running = new FileManager(sntcePathTxt.getText(), nounsPathTxt.getText(), verbsPathTxt.getText());
-                outputTxt.setText(running.createFinalSentence());
-            }}}}
+        Container c = getContentPane();
+        c.setLayout(new BorderLayout());
+ 
+        //c.add(Container, BorderLayout.CENTER);
+        northPanel = new JPanel();
+        northPanel.setLayout(new FlowLayout());
+        titleFont = new Font("Calibri", Font.BOLD, 20);
+        titleLabel = new JLabel("Produce a Mad-Lib Sentence!");
+        titleLabel.setFont(titleFont);
+        northPanel.add(titleLabel);
+        c.add(northPanel, BorderLayout.NORTH);
+        
+        westPanel = new JPanel();
+        c.add(westPanel, BorderLayout.WEST);
+        
+        eastPanel = new JPanel();
+        eastPanel.setLayout(new BoxLayout(eastPanel, BoxLayout.Y_AXIS));
+        createNewFilesButton = new CreateNewFilesButton("Create New Files");
+        okayButton = new OkayButton("Okay");
+        eastPanel.add(Box.createRigidArea(new Dimension(0,(getHeight()/4))));
+        eastPanel.add(createNewFilesButton);
+        eastPanel.add(Box.createRigidArea(new Dimension(0,10)));
+        eastPanel.add(okayButton);
+        eastPanel.add(Box.createVerticalGlue());
+        eastPanel.add(Box.createRigidArea(new Dimension(0,10)));
+        c.add(eastPanel, BorderLayout.EAST);
+        
+        centerPanel = new JPanel();
+        centerPanel.setLayout(new GridLayout(4,2));
+        sentenceButton = new SentenceButton("Find Sentence File");
+        nounButton = new NounButton("Find Noun File");
+        verbButton = new VerbButton("Find Verb File");
+        outputButton = new OutputButton("Find Output File");
+        centerPanel.add(sentenceButton);
+        sentenceTick = new JLabel(new ImageIcon("x.png"));
+        centerPanel.add(sentenceTick);
+        centerPanel.add(nounButton);
+        nounTick = new JLabel(new ImageIcon("x.png"));
+        centerPanel.add(nounTick);
+        centerPanel.add(verbButton);
+        verbTick = new JLabel(new ImageIcon("x.png"));
+        centerPanel.add(verbTick);
+        centerPanel.add(outputButton);
+        outputTick = new JLabel(new ImageIcon("x.png"));
+        centerPanel.add(outputTick);
+        c.add(centerPanel, BorderLayout.CENTER);
+        
+        southPanel = new JPanel();
+        southPanel.setLayout(new FlowLayout());
+        outputArea = new JTextArea(3,25);
+        outputArea.setLineWrap(true);
+        outputArea.setWrapStyleWord(true);
+        scroller = new JScrollPane(outputArea);
+        exitButton = new ExitButton("Exit");
+        southPanel.add(scroller);
+        southPanel.add(exitButton);
+        c.add(southPanel, BorderLayout.SOUTH);
+    }
+    
+    
+    public class OkayButton extends JButton implements ActionListener{
+        /*
+        When pressed, an object of this button class will generate a mad lib sentence using the 3 files chosen by the user.
+        The button only becomes enabled once the three files have been chosen.
+        It will output the finished string to the outputText component.
+        */
+        public OkayButton(String title){
+            setText(title);
+            setFont(new Font("Calibri", Font.BOLD, 16));
+            setForeground(Color.RED);
+            setEnabled(false);
+            addActionListener(this);
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e){
+            fm = new FileManager(sentenceFilePath, nounFilePath, verbFilePath, outputFilePath);
+            String output = fm.createFinalSentence();
+            outputArea.setText(output);
+            fm.fileWrite(output);
         }
     }
     
-    private void createGUI(){
-        setSize(400,350);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setTitle("Mad-Libs, bro!");
-        setBackground(Color.CYAN);
+    public class CreateNewFilesButton extends JButton implements ActionListener{
+        public CreateNewFilesButton(String title){
+            setText(title);
+            addActionListener(this);
+        }
         
-        c = getContentPane();
-        c.setLayout(new BoxLayout(c, BoxLayout.Y_AXIS));
-        
-        cl = new Color(123,113,255);
-        sntcePane = new JPanel();
-        sntcePane.setBorder(BorderFactory.createTitledBorder(null, "Mad-Lib Sentences!", TitledBorder.CENTER, WIDTH, new Font("Calibri", Font.BOLD, 15), Color.BLACK));
-        sntcePane.setBackground(cl);
-        sntceLBL = new JLabel("Enter the path to the Sentence file:");
-        sntcePathTxt = new JTextField(15);
-        sntcePane.add(sntceLBL);
-        sntcePane.add(sntcePathTxt);
-        
-        wordsPane = new JPanel();
-        wordsPane.setBorder(BorderFactory.createTitledBorder("For the verbs and nouns"));
-        wordsPane.setBackground(cl);
-        wordsPane.setLayout(new GridLayout(2,1));
-        innerWordsPane1 = new JPanel();
-        innerWordsPane1.setBackground(cl);
-        innerWordsPane2 = new JPanel();
-        innerWordsPane2.setBackground(cl);
-        nounsLBL = new JLabel("Enter the path to the nouns file:");
-        verbsLBL = new JLabel("Enter the path to the verbs file:");
-        nounsPathTxt = new JTextField(15);
-        verbsPathTxt = new JTextField(15);
-        wordsPane.add(innerWordsPane1);
-        wordsPane.add(innerWordsPane2);
-        innerWordsPane1.add(nounsLBL);
-        innerWordsPane2.add(verbsLBL);
-        innerWordsPane1.add(nounsPathTxt);
-        innerWordsPane2.add(verbsPathTxt);
-        
-        outputPane = new JPanel();
-        outputPane.setBorder(BorderFactory.createTitledBorder("Output"));
-        outputPane.setBackground(cl);
-        outputLBL = new JLabel("Click Okay once the paths are in.");
-        outputTxt = new JTextArea(2,30);
-        scroller = new JScrollPane(outputTxt);
-        scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        //outputTxt.setEditable(false);
-        outputPane.add(outputLBL);
-        outputPane.add(outputTxt);
-        
-        buttonPane = new JPanel();
-        buttonPane.setLayout(new GridLayout(1,5));
-        buttonPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.RAISED));
-        buttonPane.setBackground(cl);
-        okayBTN = new JButton("Okay!");
-        okayBTN.addActionListener(this);
-        exitBTN = new JButton("Exit");
-        exitBTN.addActionListener(this);
-        buttonPane.add(okayBTN);
-        buttonPane.add(exitBTN);
-        
-        c.add(sntcePane);
-        c.add(wordsPane);
-        c.add(outputPane);
-        c.add(buttonPane);
+        @Override
+        public void actionPerformed(ActionEvent e){
+            CreateNewFiles newForm = new CreateNewFiles();
+        }
     }
+    
+    public class SentenceButton extends JButton implements ActionListener{
+        /*
+        A button class which opens a JFileChooser so the user can choose a .txt file with a sentence in it.
+        The sentence must have some % and # characters.
+        */
+        public SentenceButton(String title){
+            setText(title);
+            addActionListener(this);
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e){
+            int response = sfc.showOpenDialog(this);
+            if (response == JFileChooser.APPROVE_OPTION){
+                sentenceFilePath = sfc.getSelectedFile().getAbsolutePath();
+                sentenceTick.setIcon(new ImageIcon("tick.png"));
+                setEnabled(false);
+                nounButton.setEnabled(true);
+            }
+            
+        }
+    }
+    
+    public class NounButton extends JButton implements ActionListener{
+        public NounButton(String title){
+            setText(title);
+            addActionListener(this);
+            setEnabled(false);
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e){
+            int response = sfc.showOpenDialog(this);
+            if (response == JFileChooser.APPROVE_OPTION){
+                nounFilePath = sfc.getSelectedFile().getAbsolutePath();
+                nounTick.setIcon(new ImageIcon("tick.png"));
+                setEnabled(false);
+                verbButton.setEnabled(true);
+            }              
+        }
+    }
+    
+    public class VerbButton extends JButton implements ActionListener{
+        public VerbButton(String title){
+            setText(title);
+            addActionListener(this);
+            setEnabled(false);
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e){
+            int response = sfc.showOpenDialog(this);
+            if (response == JFileChooser.APPROVE_OPTION){
+                verbFilePath = sfc.getSelectedFile().getAbsolutePath();
+                verbTick.setIcon(new ImageIcon("tick.png"));
+                setEnabled(false);
+                outputButton.setEnabled(true);
+            }   
+        }
+    }
+    
+    public class OutputButton extends JButton implements ActionListener{
+        
+        public OutputButton(String title){
+            setText(title);
+            addActionListener(this);
+            setEnabled(false);
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e){
+            int response = sfc.showOpenDialog(this);
+            if (response == JFileChooser.APPROVE_OPTION){
+                outputFilePath = sfc.getSelectedFile().getAbsolutePath();
+            }
+            okayButton.setEnabled(true);
+            setEnabled(false);
+            outputTick.setIcon(new ImageIcon("tick.png"));
+        }
+    }
+    public class ExitButton extends JButton implements ActionListener{
+        /*
+        Button class to close the application
+        */
+        public ExitButton(String title){
+            setText(title);
+            addActionListener(this);
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e){
+            System.exit(0);
+        }
+    }
+    
+
 }
